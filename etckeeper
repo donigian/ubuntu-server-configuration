@@ -1,0 +1,11 @@
+install etckeeper
+etckeeper allows the contents of /etc be easily stored in Version Control System (VCS) repository. It hooks into apt to automatically commit changes to /etc when packages are installed or upgraded. 
+
+sudo apt-get install etckeeper
+
+sudo etckeeper commit "..Reason for configuration change.."
+
+sudo bzr log filename
+sudo bzr status /etc/
+
+any subsequent packages installed will automatically trigger config files (/etc) to be checked in.
