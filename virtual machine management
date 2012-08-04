@@ -1,0 +1,51 @@
+Virtual Machine Management
+
+There are several utilities available to manage virtual machines and libvirt. The virsh utility can be used from the command line.
+
+To list running virtual machines: 
+virsh -c qemu:///system list
+
+To start a virtual machine: 
+virsh -c qemu:///system start web_devel
+
+Similarly, to start a virtual machine at boot:
+virsh -c qemu:///system autostart web_devel
+
+Reboot a virtual machine with: 
+virsh -c qemu:///system reboot web_devel
+
+The state of virtual machines can be saved to a file in order to be restored later. The following will save the virtual machine state into a file named according to the date: 
+virsh -c qemu:///system save web_devel web_devel-022708.state
+
+A saved virtual machine can be restored using: 
+virsh -c qemu:///system restore web_devel-022708.state
+
+
+To shutdown a virtual machine do: 
+virsh -c qemu:///system shutdown web_devel
+
+A CDROM device can be mounted in a virtual machine by entering: 
+virsh -c qemu:///system attach-disk web_devel /dev/cdrom /media/cdrom
+
+
+The virt-manager package contains a graphical utility to manage local and remote virtual machines.
+sudo apt-get install virt-manager
+
+Since virt-manager requires a Graphical User Interface (GUI) environment it is recommended to be installed on a workstation or test machine instead of a production server. 
+virt-manager -c qemu:///system
+
+You can connect to the libvirt service running on another host by entering the following in a terminal prompt:
+virt-manager -c qemu+ssh://virtnode1.mydomain.com/system
+
+The above example assumes that SSH connectivity between the management system and virtnode1.mydomain.com has already been configured, and uses SSH keys for authentication. SSH keys are needed because libvirt sends the password prompt to another process. 
+
+The virt-viewer application allows you to connect to a virtual machine's console. virt-viewer does require a Graphical User Interface (GUI) to interface with the virtual machine. 
+sudo apt-get install virt-viewer
+
+Once a virtual machine is installed and running you can connect to the virtual machine's console by using: 
+virt-viewer -c qemu:///system web_devel
+
+In the above examples replace web_devel with the appropriate virtual machine name, and web_devel-022708.state with a descriptive file name. 
+
+Similar to virt-manager, virt-viewer can connect to a remote host using SSH with key authentication, as well: 
+virt-viewer -c qemu+ssh://virtnode1.mydomain.com/system web_devel
