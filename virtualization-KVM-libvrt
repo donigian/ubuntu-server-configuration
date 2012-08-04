@@ -1,0 +1,81 @@
+Virtualization
+
+If you are a developer, virtualization can provide you with a contained environment where you can safely do almost any sort of development safe from messing up your main working environment. If you are a systems administrator, you can use virtualization to more easily separate your services and move them around based on demand. 
+
+For hardware without virtualization extensions Xen and Qemu are popular solutions. 
+
+make sure your hardware supports the necessary virtualization extensions for KVM
+ kvm-ok
+ egrep -c '(vmx|svm)' /proc/cpuinfo
+
+NOTE: You may see a message like "KVM acceleration can/can NOT be used". This is misleading and only means if KVM is *currently* available (i.e. "turned on"), *not* if it is supported. 
+
+ sudo apt-get install kvm libvirt-bin
+
+After installing libvirt-bin, the user used to manage virtual machines will need to be added to the libvirtd group
+sudo adduser $USER libvirtd
+
+Instead of installing a GUI the virt-viewer application can be used to connect to a virtual machine's console using VNC. 
+
+virt-install is part of the virtinst package
+sudo apt-get install virtinst
+
+sudo virt-install -n web_devel -r 256 \
+--disk path=/var/lib/libvirt/images/web_devel.img,size=4 -c jeos.iso --accelerate \
+--connect=qemu:///system --vnc \
+--noautoconsole -v
+
+    -n web_devel: the name of the new virtual machine will be web_devel in this example.
+
+    -r 256: specifies the amount of memory the virtual machine will use in megabytes.
+
+    --disk path=/var/lib/libvirt/images/web_devel.img,size=4: indicates the path to the virtual disk which can be a file, partition, or logical volume. In this example a file named web_devel.img in the /var/lib/libvirt/images/ directory with a size of 4 gigabytes.
+
+    -c jeos.iso: file to be used as a virtual CDROM. The file can be either an ISO file or the path to the host's CDROM device.
+
+    --accelerate: enables the kernel's acceleration technologies.
+
+    --vnc: exports the guest's virtual console using VNC.
+
+    --noautoconsole: will not automatically connect to the virtual machine's console.
+
+    -v: creates a fully virtualized guest.
+
+After launching virt-install you can connect to the virtual machine's console either locally using a GUI or with the virt-viewer utility. 
+
+The virt-clone application can be used to copy one virtual machine to another. 
+sudo virt-clone -o web_devel -n database_devel -f /path/to/database_devel.img --connect=qemu:///system 
+
+    -o: original virtual machine.
+
+    -n: name of the new virtual machine.
+
+    -f: path to the file, logical volume, or partition to be used by the new virtual machine.
+
+    --connect: specifies which hypervisor to connect to.
+
+Also, use -d or --debug option to help troubleshoot problems with virt-clone. 
+
+if your running kernel is 64-bit
+ uname -m
+
+*******************
+
+Installation of KVM
+sudo apt-get install qemu-kvm libvirt-bin ubuntu-vm-builder bridge-utils
+
+libvirt-bin provides libvirtd which you need to administer qemu and kvm instances using libvirt
+
+qemu-kvm (kvm in Karmic and earlier) is the backend
+
+ubuntu-vm-builder powerful command line tool for building virtual machines
+
+bridge-utils provides a bridge from your network to the virtual machines 
+
+You need to ensure that your username is added to the group libvirtd: 
+ sudo adduser `id -un` libvirtd
+ virsh -c qemu:///system list
+
+restart the kernel modules: 
+rmmod kvm
+modprobe -a kvm
