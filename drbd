@@ -1,0 +1,70 @@
+DRBD
+Distributed Replicated Block Device (DRBD) mirrors block devices between multiple hosts. The replication is transparent to other applications on the host systems. 
+
+The partition size is not particularly relevant, but both partitions need to be the same size. 
+
+sudo apt-get install drbd8-utils
+
+To configure drbd, on the first host edit /etc/drbd.conf:
+global { usage-count no; }
+common { syncer { rate 100M; } }
+resource r0 {
+        protocol C;
+        startup {
+                wfc-timeout  15;
+                degr-wfc-timeout 60;
+        }
+        net {
+                cram-hmac-alg sha1;
+                shared-secret "secret";
+        }
+        on drbd01 {
+                device /dev/drbd0;
+                disk /dev/sdb1;
+                address 192.168.0.1:7788;
+                meta-disk internal;
+        }
+        on drbd02 {
+                device /dev/drbd0;
+                disk /dev/sdb1;
+                address 192.168.0.2:7788;
+                meta-disk internal;
+        }
+} 
+
+Now copy /etc/drbd.conf to the second host: 
+scp /etc/drbd.conf drbd02:~
+
+And, on drbd02 move the file to /etc: 
+sudo mv drbd.conf /etc/
+
+drbdadm utility initialize the meta data storage. On each server execute: 
+sudo drbdadm create-md r0
+
+on both hosts, start the drbd daemon: 
+sudo /etc/init.d/drbd start
+
+On the primary host, enter the following: 
+sudo drbdadm -- --overwrite-data-of-peer primary all
+*data will start syncing with the secondary host 
+
+To watch the progress, on drbd02
+watch -n1 cat /proc/drbd
+
+add a filesystem to /dev/drbd0 and mount it: 
+sudo mkfs.ext3 /dev/drbd0
+sudo mount /dev/drbd0 /srv
+
+
+To Test
+To test that the data is actually syncing between the hosts copy some files on the drbd01, the primary, to /srv: 
+sudo cp -r /etc/default /srv
+sudo umount /srv
+
+Demote the primary server to the secondary role: 
+sudo drbdadm secondary r0
+
+Now on the secondary server promote it to the primary role: 
+sudo drbdadm primary r0
+
+sudo mount /dev/drbd0 /srv
